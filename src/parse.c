@@ -6,6 +6,10 @@
 
 #include "parse.h"
 
+#define MAX_EMPLOYEE_COUNT 123456 //arbitrary for now
+#define FAIL 1
+#define OK 0
+
 void* xmalloc(size_t size)
 {
 	if (size == 0)
@@ -16,7 +20,7 @@ void* xmalloc(size_t size)
 	return malloc(size);
 }
 
-int check_header(struct dbheader_s* headerPtr, unsigned int filesize)
+int check_header(struct dbheader_t* headerPtr, unsigned int filesize)
 {
 	if (headerPtr->magic != HEADER_MAGIC ||
 		headerPtr->version != DB_VERSION ||
@@ -29,14 +33,14 @@ int check_header(struct dbheader_s* headerPtr, unsigned int filesize)
 	return OK;
 }
 
-int create_db_header(struct dbheader_s **headerOut)
+int create_db_header(struct dbheader_t **headerOut)
 {
 	if (headerOut == NULL)
 	{
 		return FAIL;
 	}
 
-	*headerOut = (struct dbheader_s *)xmalloc(sizeof(struct dbheader_s));
+	*headerOut = (struct dbheader_t *)xmalloc(sizeof(struct dbheader_t));
 	if (*headerOut == NULL)
 	{
 		return FAIL;
@@ -49,7 +53,7 @@ int create_db_header(struct dbheader_s **headerOut)
 	return OK;
 }
 
-int validate_db_header(int fd, struct dbheader_s **headerOut)
+int validate_db_header(int fd, struct dbheader_t **headerOut)
 {
 	if (headerOut == NULL)
 	{
@@ -57,7 +61,7 @@ int validate_db_header(int fd, struct dbheader_s **headerOut)
 		return FAIL;
 	}
 	
-	size_t headerSize = sizeof(struct dbheader_s);
+	size_t headerSize = sizeof(struct dbheader_t);
 	char headerBuf[headerSize];
 	if (read(fd, headerBuf, headerSize) < headerSize)
 	{
@@ -70,14 +74,14 @@ int validate_db_header(int fd, struct dbheader_s **headerOut)
 		return FAIL;
 	}
 
-	struct dbheader_s* headerPtr = (struct dbheader_s*)headerBuf;
+	struct dbheader_t* headerPtr = (struct dbheader_t*)headerBuf;
 	if (check_header(headerPtr, (unsigned int)fileStat.st_size != OK))
 	{
 		//ERRNO not set
 		return FAIL;
 	}
 
-	*headerOut = (struct dbheader_s *)xmalloc(headerSize);
+	*headerOut = (struct dbheader_t *)xmalloc(headerSize);
 	if (*headerOut == NULL)
 	{
 		return FAIL;
@@ -87,7 +91,7 @@ int validate_db_header(int fd, struct dbheader_s **headerOut)
 	return OK;
 }
 
-int read_employees(int fd, struct dbheader_s *headerIn, struct employee_s **employeesOut)
+int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **employeesOut)
 {
 	if (employeesOut == NULL)
 	{
@@ -108,8 +112,8 @@ int read_employees(int fd, struct dbheader_s *headerIn, struct employee_s **empl
 		return FAIL;
 	}
 	
-	size_t employeesSize = sizeof(struct employee_s) * headerIn->count;
-	*employeesOut = (struct employee_s *)xmalloc(employeesSize);
+	size_t employeesSize = sizeof(struct employee_t) * headerIn->count;
+	*employeesOut = (struct employee_t *)xmalloc(employeesSize);
 	if (*employeesOut == NULL)
 	{
 		return FAIL;
@@ -123,7 +127,7 @@ int read_employees(int fd, struct dbheader_s *headerIn, struct employee_s **empl
 	return OK;
 }
 
-int output_file(int fd, struct dbheader_s *headerIn, struct employee_s *employees)
+int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employees)
 {
 	if (check_header(headerIn, headerIn->filesize))
 	{
@@ -131,12 +135,12 @@ int output_file(int fd, struct dbheader_s *headerIn, struct employee_s *employee
 		return FAIL;
 	}
 	
-	if (write(fd, headerIn, sizeof(struct dbheader_s)) < sizeof(struct dbheader_s))
+	if (write(fd, headerIn, sizeof(struct dbheader_t)) < sizeof(struct dbheader_t))
 	{
 		return FAIL;
 	}
-	if (write(fd, employees, sizeof(struct employee_s) * headerIn->count) <
-			sizeof(struct employee_s) * headerIn->count)
+	if (write(fd, employees, sizeof(struct employee_t) * headerIn->count) <
+			sizeof(struct employee_t) * headerIn->count)
 	{
 		return FAIL;
 	}
