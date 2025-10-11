@@ -7,6 +7,7 @@
 #include "parse.h"
 
 #define MAX_EMPLOYEE_COUNT 123456 //arbitrary for now
+#define DB_VERSION 1
 #define FAIL 1
 #define OK 0
 
