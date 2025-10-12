@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 
 #include "parse.h"
 #include "common.h"
@@ -20,7 +20,6 @@ int check_header(struct dbheader_t* headerPtr, unsigned int filesize)
 {
 	if (headerPtr->magic != HEADER_MAGIC ||
 		headerPtr->version != DB_VERSION ||
-		headerPtr->count > MAX_EMPLOYEE_COUNT ||
 		headerPtr->filesize != filesize)
 	{
 		//ERRNO not set
@@ -59,7 +58,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut)
 		return FAIL;
 	}
 	
-	size_t headerSize = sizeof(struct dbheader_t);
+	ssize_t headerSize = sizeof(struct dbheader_t);
 	char headerBuf[headerSize];
 	if (read(fd, headerBuf, headerSize) < headerSize)
 	{
@@ -110,7 +109,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 		return FAIL;
 	}
 	
-	size_t employeesSize = sizeof(struct employee_t) * headerIn->count;
+	ssize_t employeesSize = sizeof(struct employee_t) * headerIn->count;
 	*employeesOut = (struct employee_t *)xmalloc(employeesSize);
 	if (*employeesOut == NULL)
 	{
@@ -133,12 +132,12 @@ int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employee
 		return FAIL;
 	}
 	
-	if (write(fd, headerIn, sizeof(struct dbheader_t)) < sizeof(struct dbheader_t))
+	if (write(fd, headerIn, sizeof(struct dbheader_t)) < (ssize_t)sizeof(struct dbheader_t))
 	{
 		return FAIL;
 	}
 	if (write(fd, employees, sizeof(struct employee_t) * headerIn->count) <
-			sizeof(struct employee_t) * headerIn->count)
+			(ssize_t)sizeof(struct employee_t) * headerIn->count)
 	{
 		return FAIL;
 	}
