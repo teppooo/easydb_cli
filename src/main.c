@@ -3,6 +3,7 @@
 #include <getopt.h>
 
 #include "file.h"
+#include "parse.h"
 #include "common.h"
 
 void print_usage(char **av)
@@ -47,6 +48,25 @@ int main(int ac, char** av)
 	{
 		dbfd = create_db_file(filepath);
 		if (dbfd == -1)
+		{
+			return -1;
+		}
+		
+		struct dbheader_t* headerPtr = NULL;
+		if (create_db_header(&headerPtr) == STATUS_ERROR)
+		{
+			return -1;
+		}
+		
+/*		if (headerPtr->count > 0)
+		{
+			if (read_employees(dbfd, headerPtr, &employeesPtr))
+			{
+				return -1;
+			}
+		}
+*/
+		if (output_file(dbfd, headerPtr, NULL)) //no employees to output yet
 		{
 			return -1;
 		}

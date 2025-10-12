@@ -39,7 +39,6 @@ int create_db_header(struct dbheader_t **headerOut)
 	*headerOut = (struct dbheader_t *)xmalloc(sizeof(struct dbheader_t));
 	if (*headerOut == NULL)
 	{
-		//ERRNO not set
 		return STATUS_ERROR;
 	}
 
@@ -72,7 +71,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut)
 	}
 
 	struct dbheader_t* headerPtr = (struct dbheader_t*)headerBuf;
-	if (check_header(headerPtr, (unsigned int)fileStat.st_size) != STATUS_SUCCESS)
+	if (check_header(headerPtr, (ssize_t)fileStat.st_size) != STATUS_SUCCESS)
 	{
 		//ERRNO not set
 		return STATUS_ERROR;
@@ -126,14 +125,25 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 
 int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employees)
 {
-	if (check_header(headerIn, headerIn->filesize))
+	if (headerIn != NULL && check_header(headerIn, headerIn->filesize))
 	{
 		//ERRNO not set
 		return STATUS_ERROR;
 	}
+	headerIn->filesize = sizeof(struct dbheader_t) + sizeof(struct employee_t) * headerIn->count;
 	
 	if (write(fd, headerIn, sizeof(struct dbheader_t)) < (ssize_t)sizeof(struct dbheader_t))
 	{
+		return STATUS_ERROR;
+	}
+
+	if (employees == NULL)
+	{
+		if (headerIn->count == 0)
+		{
+			//no employees to write
+			return STATUS_SUCCESS;
+		}
 		return STATUS_ERROR;
 	}
 	if (write(fd, employees, sizeof(struct employee_t) * headerIn->count) <
