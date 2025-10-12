@@ -72,7 +72,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut)
 	}
 
 	struct dbheader_t* headerPtr = (struct dbheader_t*)headerBuf;
-	if (check_header(headerPtr, (unsigned int)fileStat.st_size != STATUS_SUCCESS))
+	if (check_header(headerPtr, (unsigned int)fileStat.st_size) != STATUS_SUCCESS)
 	{
 		//ERRNO not set
 		return STATUS_ERROR;
