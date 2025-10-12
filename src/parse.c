@@ -5,11 +5,7 @@
 #include <string.h>
 
 #include "parse.h"
-
-#define MAX_EMPLOYEE_COUNT 123456 //arbitrary for now
-#define DB_VERSION 1
-#define FAIL 1
-#define OK 0
+#include "common.h"
 
 void* xmalloc(size_t size)
 {
@@ -17,7 +13,6 @@ void* xmalloc(size_t size)
 	{
 		return NULL;
 	}
-	//tag memory for freeing on exit?
 	return malloc(size);
 }
 
@@ -38,12 +33,14 @@ int create_db_header(struct dbheader_t **headerOut)
 {
 	if (headerOut == NULL)
 	{
+		//ERRNO not set
 		return FAIL;
 	}
 
 	*headerOut = (struct dbheader_t *)xmalloc(sizeof(struct dbheader_t));
 	if (*headerOut == NULL)
 	{
+		//ERRNO not set
 		return FAIL;
 	}
 
