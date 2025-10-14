@@ -90,11 +90,6 @@ int main(int ac, char** av)
 	}
 	else
 	{
-		printf("main: magic:%u version:%u count:%u filesize:%u\n",
-			headerPtr->magic,
-			headerPtr->version,
-			headerPtr->count,
-			headerPtr->filesize);
 		printf("oops :(\n");
 		return -1;
 	}
