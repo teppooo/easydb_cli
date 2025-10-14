@@ -57,7 +57,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut)
 		return STATUS_ERROR;
 	}
 	
-	ssize_t headerSize = sizeof(struct dbheader_t);
+	const ssize_t headerSize = sizeof(struct dbheader_t);
 	char headerBuf[headerSize];
 	if (read(fd, headerBuf, headerSize) < headerSize)
 	{

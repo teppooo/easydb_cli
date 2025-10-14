@@ -57,15 +57,7 @@ int main(int ac, char** av)
 		{
 			return -1;
 		}
-		
-/*		if (headerPtr->count > 0)
-		{
-			if (read_employees(dbfd, headerPtr, &employeesPtr))
-			{
-				return -1;
-			}
-		}
-*/
+
 		if (output_file(dbfd, headerPtr, NULL)) //no employees to output yet
 		{
 			return -1;
