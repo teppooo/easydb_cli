@@ -138,13 +138,12 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 
 int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employees)
 {
-	if (fd < 0)
+	if (fd < 0 || headerIn == NULL)
 	{
 		//ERRNO not set
 		return STATUS_ERROR;
 	}
-
-	if (headerIn != NULL && check_header(headerIn, headerIn->filesize))
+	if (headerIn->magic != HEADER_MAGIC || headerIn->version != DB_VERSION)
 	{
 		//ERRNO not set
 		return STATUS_ERROR;
@@ -165,10 +164,12 @@ int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employee
 		}
 		return STATUS_ERROR;
 	}
+
 	if (write(fd, employees, sizeof(struct employee_t) * headerIn->count) <
 			(ssize_t)sizeof(struct employee_t) * headerIn->count)
 	{
 		return STATUS_ERROR;
 	}
+
 	return STATUS_SUCCESS;
 }

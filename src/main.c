@@ -74,12 +74,27 @@ int main(int ac, char** av)
 
 	struct dbheader_t* headerPtr = NULL;
 	dbfd = open(filepath, O_RDWR);
-	if (dbfd != -1 && validate_db_header(dbfd, &headerPtr) == STATUS_SUCCESS)
+	if (dbfd == -1)
 	{
+		return -1;
+	}
+
+	if (validate_db_header(dbfd, &headerPtr) == STATUS_SUCCESS)
+	{
+		printf("main: magic:%u version:%u count:%u filesize:%u\n",
+			headerPtr->magic,
+			headerPtr->version,
+			headerPtr->count,
+			headerPtr->filesize);
 		printf("good job :)\n");
 	}
 	else
 	{
+		printf("main: magic:%u version:%u count:%u filesize:%u\n",
+			headerPtr->magic,
+			headerPtr->version,
+			headerPtr->count,
+			headerPtr->filesize);
 		printf("oops :(\n");
 		return -1;
 	}
