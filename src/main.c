@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "file.h"
 #include "parse.h"
@@ -62,9 +66,23 @@ int main(int ac, char** av)
 		{
 			return -1;
 		}
+		close(dbfd);
 	}
+
 	printf("Newfile: %s\n", newfile ? "true" : "false");
 	printf("Filepath: %s\n", filepath);
+
+	struct dbheader_t* headerPtr = NULL;
+	dbfd = open(filepath, O_RDWR);
+	if (dbfd != -1 && validate_db_header(dbfd, &headerPtr) == STATUS_SUCCESS)
+	{
+		printf("good job :)\n");
+	}
+	else
+	{
+		printf("oops :(\n");
+		return -1;
+	}
 
 	return 0;
 }

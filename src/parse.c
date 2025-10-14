@@ -45,12 +45,18 @@ int create_db_header(struct dbheader_t **headerOut)
 	(*headerOut)->magic = HEADER_MAGIC;
 	(*headerOut)->version = 1;
 	(*headerOut)->count = 0;
-	(*headerOut)->filesize = 0;
+	(*headerOut)->filesize = sizeof(struct dbheader_t);
 	return STATUS_SUCCESS;
 }
 
 int validate_db_header(int fd, struct dbheader_t **headerOut)
 {
+	if (fd < 0)
+	{
+		//ERRNO not set
+		return STATUS_ERROR;
+	}
+
 	if (headerOut == NULL)
 	{
 		//ERRNO not set
@@ -89,6 +95,12 @@ int validate_db_header(int fd, struct dbheader_t **headerOut)
 
 int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **employeesOut)
 {
+	if (fd < 0)
+	{
+		//ERRNO not set
+		return STATUS_ERROR;
+	}
+
 	if (employeesOut == NULL)
 	{
 		//ERRNO not set
@@ -108,6 +120,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 		return STATUS_ERROR;
 	}
 	
+	//I'm assuming we will validate the employees also at some point some day
 	ssize_t employeesSize = sizeof(struct employee_t) * headerIn->count;
 	*employeesOut = (struct employee_t *)xmalloc(employeesSize);
 	if (*employeesOut == NULL)
@@ -125,6 +138,12 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 
 int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employees)
 {
+	if (fd < 0)
+	{
+		//ERRNO not set
+		return STATUS_ERROR;
+	}
+
 	if (headerIn != NULL && check_header(headerIn, headerIn->filesize))
 	{
 		//ERRNO not set
