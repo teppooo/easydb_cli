@@ -107,7 +107,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 
 	if (headerIn->count == 0)
 	{
-		printf("No employees");
+		printf("No employees\n");
 		return STATUS_ERROR;
 	}
 	
@@ -146,7 +146,7 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t **employees, cha
 
 	if (headerIn == NULL || employees == NULL)
 	{
-		printf("Error adding employee");
+		printf("Error adding employee\n");
 		return STATUS_ERROR;
 	}
 
@@ -157,10 +157,12 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t **employees, cha
 		perror("realloc");
 		return STATUS_ERROR;
 	}
+	headerIn->count++;
+	*employees = employeesOut;
 
-	char *name = (char*) &(employeesOut[headerIn->count].name);
-	char *addr = (char*) &(employeesOut[headerIn->count].address);
-	unsigned int *hours = &(employeesOut[headerIn->count].hours);
+	char *name = (char*) &(employeesOut[headerIn->count - 1].name);
+	char *addr = (char*) &(employeesOut[headerIn->count - 1].address);
+	unsigned int *hours = &(employeesOut[headerIn->count - 1].hours);
 
 	bzero(name, NAME_LEN);
 	bzero(addr, ADDRESS_LEN);
@@ -205,8 +207,6 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t **employees, cha
 	strncpy((char *)hourBuf, &(start[seek + 1]), maxDigits - 1); //always leave a null byte
 	*hours = (unsigned int)strtol(hourBuf, NULL, 10);
 	
-	headerIn->count++;
-	*employees = employeesOut;
 	return STATUS_SUCCESS;
 }
 
