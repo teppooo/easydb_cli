@@ -66,6 +66,7 @@ int main(int ac, char** av)
 	printf("Newfile: %s\n", newfile ? "true" : "false");
 	printf("Filepath: %s\n", filepath);
 
+	struct dbheader_t* headerPtr = NULL;
 	if (newfile)
 	{
 		dbfd = create_db_file(filepath);
@@ -73,51 +74,32 @@ int main(int ac, char** av)
 		{
 			return -1;
 		}
-		
-		struct dbheader_t* headerPtr = NULL;
 		if (create_db_header(&headerPtr) == STATUS_ERROR)
 		{
 			return -1;
 		}
-
-		if (output_file(dbfd, headerPtr, NULL)) //no employees to output yet
-		{
-			return -1;
-		}
 		printf("Database created.\n");
-		close(dbfd);
-		return 0;
-	}
-
-	struct dbheader_t* headerPtr = NULL;
-	dbfd = open(filepath, O_RDWR);
-	if (dbfd == -1)
-	{
-		perror("open db");
-		return -1;
-	}
-
-	if (validate_db_header(dbfd, &headerPtr) == STATUS_SUCCESS)
-	{
-		printf("main: magic:%u version:%u count:%u filesize:%u\n",
-			headerPtr->magic,
-			headerPtr->version,
-			headerPtr->count,
-			headerPtr->filesize);
-		printf("good job :)\n");
 	}
 	else
 	{
-		printf("oops :(\n");
-		return -1;
+		dbfd = open(filepath, O_RDWR);
+		if (dbfd == -1)
+		{
+			perror("open db");
+			return -1;
+		}
+		if (validate_db_header(dbfd, &headerPtr) == STATUS_ERROR)
+		{
+			return -1;
+		}
 	}
 
-	if (addstring == NULL && list == false)
-	{
-		//guess we can exit early
-		free(headerPtr);
-		return 0;
-	}
+	printf("main: magic:%u version:%u count:%u filesize:%u\n",
+		headerPtr->magic,
+		headerPtr->version,
+		headerPtr->count,
+		headerPtr->filesize);
+	printf("good job so far :)\n");
 
 	struct employee_t* employeesPtr = NULL;
 	if (headerPtr->count > 0 && read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR)

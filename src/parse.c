@@ -105,18 +105,19 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 		return STATUS_ERROR;
 	}
 
-	if (headerIn->count == 0)
-	{
-		printf("No employees\n");
-		return STATUS_ERROR;
-	}
-	
 	ssize_t employeesSize = sizeof(struct employee_t) * headerIn->count;
 	struct employee_t* employees = (struct employee_t *)xmalloc(employeesSize);
 	if (employees == NULL)
 	{
 		perror("malloc");
 		return STATUS_ERROR;
+	}
+
+	//can stop here if no employees
+	if (headerIn->count == 0)
+	{
+		*employeesOut = employees;
+		return STATUS_SUCCESS;
 	}
 	
 	if (read(fd, employees, employeesSize) < employeesSize)
@@ -134,7 +135,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 	return STATUS_SUCCESS;
 }
 
-int add_employee(struct dbheader_t *headerIn, struct employee_t **employees, char* addStr)
+int add_employee(struct dbheader_t *headerIn, struct employee_t **employeesOut, char* addStr)
 {
 	//strtok would be about 1000x simpler but that's no fun
 	//we got plenty of memory allocated in structs, should be fine
@@ -144,25 +145,25 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t **employees, cha
 		return STATUS_ERROR;
 	}
 
-	if (headerIn == NULL || employees == NULL)
+	if (headerIn == NULL || employeesOut == NULL)
 	{
 		printf("Error adding employee\n");
 		return STATUS_ERROR;
 	}
 
-	struct employee_t *employeesOut = realloc(*employees, 
+	struct employee_t *employees = realloc(*employeesOut, 
 			sizeof(struct employee_t) * (headerIn->count + 1));
-	if (employeesOut == NULL)
+	if (employees == NULL)
 	{
 		perror("realloc");
 		return STATUS_ERROR;
 	}
 	headerIn->count++;
-	*employees = employeesOut;
+	*employeesOut = employees;
 
-	char *name = (char*) &(employeesOut[headerIn->count - 1].name);
-	char *addr = (char*) &(employeesOut[headerIn->count - 1].address);
-	unsigned int *hours = &(employeesOut[headerIn->count - 1].hours);
+	char *name = (char*) &(employees[headerIn->count - 1].name);
+	char *addr = (char*) &(employees[headerIn->count - 1].address);
+	unsigned int *hours = &(employees[headerIn->count - 1].hours);
 
 	bzero(name, NAME_LEN);
 	bzero(addr, ADDRESS_LEN);
