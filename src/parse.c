@@ -154,43 +154,34 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 	unsigned int *hours = &(employeesIn[headerIn->count - 1].hours);
 
 	bzero(name, NAME_LEN);
-	bzero(name, ADDRESS_LEN);
+	bzero(addr, ADDRESS_LEN);
 
 	ptrdiff_t seek = 0;
 	char *start = addStr;
 
-	while (start[seek] != ',' && start[seek] != '\0')
+	while (start[seek] != ',')
 	{
 		seek++;
-		if (seek == NAME_LEN)
+		if (seek == NAME_LEN || start[seek] == '\0')
 		{
 			printf("Bad add string\n");
 			return STATUS_ERROR;
 		}
-	}
-	if (start[seek] == '\0')
-	{
-		printf("Bad add string\n");
-		return STATUS_ERROR;
 	}
 	memcpy(name, start, seek < NAME_LEN - 1 ? seek : NAME_LEN - 1);
 	start = &(start[seek + 1]);
 	seek = 0;
 
-	while (start[seek] != ',' && start[seek] != '\0')
+	while (start[seek] != ',')
 	{
 		seek++;
-		if (seek == ADDRESS_LEN)
+		if (seek == ADDRESS_LEN || start[seek] == '\0')
 		{
 			printf("Bad add string\n");
 			return STATUS_ERROR;
 		}
 	}
-	if (start[seek] == '\0')
-	{
-		printf("Bad add string\n");
-		return STATUS_ERROR;
-	}	
+	
 	memcpy(addr, start, seek < ADDRESS_LEN - 1 ? seek : ADDRESS_LEN - 1);
 
 	//what about if addStr is not null terminated
