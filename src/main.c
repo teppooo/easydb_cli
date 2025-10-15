@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "file.h"
 #include "parse.h"
@@ -20,11 +21,12 @@ void print_usage(char **av)
 int main(int ac, char** av)
 {
 	char *filepath = NULL;
+	char *addstring = NULL;
 	bool newfile = false;
 	int dbfd = -1;
 	int c = 0;
 
-	while ((c = getopt(ac, av, "nf:")) != -1)
+	while ((c = getopt(ac, av, "nf:a:")) != -1)
 	{
 		switch (c) {
 			case 'n':
@@ -32,6 +34,9 @@ int main(int ac, char** av)
 				break;
 			case 'f':
 				filepath = optarg;
+				break;
+			case 'a':
+				addstring = optarg;
 				break;
 			case '?':
 				printf("Unknown option -%c\n", c);
@@ -47,6 +52,9 @@ int main(int ac, char** av)
 		print_usage(av);
 		return -1;
 	}
+
+	printf("Newfile: %s\n", newfile ? "true" : "false");
+	printf("Filepath: %s\n", filepath);
 
 	if (newfile)
 	{
@@ -66,11 +74,10 @@ int main(int ac, char** av)
 		{
 			return -1;
 		}
+		printf("Database created.\n");
 		close(dbfd);
+		return 0;
 	}
-
-	printf("Newfile: %s\n", newfile ? "true" : "false");
-	printf("Filepath: %s\n", filepath);
 
 	struct dbheader_t* headerPtr = NULL;
 	dbfd = open(filepath, O_RDWR);
@@ -91,6 +98,24 @@ int main(int ac, char** av)
 	else
 	{
 		printf("oops :(\n");
+		return -1;
+	}
+
+	struct employee_t* employeesPtr = NULL;
+	if (headerPtr->count > 0 && read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR)
+	{
+		return -1;
+	}
+
+	if (addstring != NULL)
+	{
+		headerPtr->count++;
+		employeesPtr = realloc(employeesPtr, sizeof(struct employee_t) * headerPtr->count);
+		add_employee(headerPtr, employeesPtr, addstring);
+	}
+
+	if (output_file(dbfd, headerPtr, employeesPtr)) //no employees to output yet
+	{
 		return -1;
 	}
 

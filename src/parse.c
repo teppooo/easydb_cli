@@ -2,9 +2,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #include "parse.h"
 #include "common.h"
@@ -15,7 +16,7 @@ void* xmalloc(size_t size)
 	{
 		return NULL;
 	}
-	return malloc(size);
+	return calloc(1, size);
 }
 
 int check_header(struct dbheader_t* headerPtr, unsigned int filesize)
@@ -93,7 +94,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 {
 	if (fd < 0 || employeesOut == NULL)
 	{
-		printf("Can't read employees\n");
+		printf("Error while reading employees\n");
 		return STATUS_ERROR;
 	}
 
@@ -102,22 +103,87 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 		printf("Bad header\n");
 		return STATUS_ERROR;
 	}
+
+	if (headerIn->count == 0)
+	{
+		printf("No employees");
+		return STATUS_ERROR;
+	}
 	
-	//I'm assuming we will validate the employees also at some point some day
 	ssize_t employeesSize = sizeof(struct employee_t) * headerIn->count;
-	*employeesOut = (struct employee_t *)xmalloc(employeesSize);
-	if (*employeesOut == NULL)
+	struct employee_t* employees = (struct employee_t *)xmalloc(employeesSize);
+	if (employees == NULL)
 	{
 		perror("malloc");
 		return STATUS_ERROR;
 	}
 	
-	if (read(fd, *employeesOut, employeesSize) < employeesSize)
+	if (read(fd, employees, employeesSize) < employeesSize)
 	{
 		perror("read employees");
 		free(*employeesOut);
 		return STATUS_ERROR;
 	}
+
+	for (int i = 0; i < headerIn->count; i++)
+	{
+		employees[i].hours = ntohl(employees[i].hours);
+	}
+	*employeesOut = employees;
+	return STATUS_SUCCESS;
+}
+
+int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, char* addStr)
+{
+	if (addStr == NULL || addStr[0] == '\0')
+	{
+		printf("Bad add string\n");
+		return STATUS_ERROR;
+	}
+
+	if (headerIn == NULL || employeesIn == NULL)
+	{
+		printf("Error adding employee");
+		return STATUS_ERROR;
+	}
+
+	char *cur = addStr;
+	char *start = addStr;
+	char *name = (char*) &(employeesIn[headerIn->count - 1].name);
+	char *addr = (char*) &(employeesIn[headerIn->count - 1].address);
+	unsigned int *hours = &(employeesIn[headerIn->count - 1].hours);
+
+	bzero(name, NAME_LEN);
+	bzero(name, ADDRESS_LEN);
+
+	while (*cur != ',' && *cur != '\0')
+	{
+		cur++;
+	}
+	if (*cur == '\0')
+	{
+		printf("Bad add string\n");
+		return STATUS_ERROR;
+	}
+	ptrdiff_t len = cur - start;
+	memcpy(name, start, len < NAME_LEN - 1 ? len : NAME_LEN - 1);
+	cur++;
+	start = cur;
+
+	while (*cur != ',' && *cur != '\0')
+	{
+		cur++;
+	}
+	if (*cur == '\0')
+	{
+		printf("Bad add string\n");
+		return STATUS_ERROR;
+	}	
+	len = cur - start;
+	memcpy(addr, start, len < ADDRESS_LEN - 1 ? len : ADDRESS_LEN - 1);
+	cur++;
+	*hours = (unsigned int)strtol(cur, NULL, 10);
+
 	return STATUS_SUCCESS;
 }
 
@@ -134,11 +200,14 @@ int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employee
 		printf("Bad header\n");
 		return STATUS_ERROR;
 	}
+	int count = headerIn->count;
 
 	headerIn->magic = htonl(headerIn->magic);
 	headerIn->version = htons(headerIn->version);
 	headerIn->count = htons(headerIn->count);
-	headerIn->filesize = htonl(sizeof(struct dbheader_t) + sizeof(struct employee_t) * headerIn->count);
+	headerIn->filesize = htonl(
+			sizeof(struct dbheader_t) + 
+			sizeof(struct employee_t) * count);
 	lseek(fd, 0, SEEK_SET);
 	if (write(fd, headerIn, sizeof(struct dbheader_t)) < (ssize_t)sizeof(struct dbheader_t))
 	{
@@ -148,7 +217,7 @@ int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employee
 
 	if (employees == NULL)
 	{
-		if (headerIn->count == 0)
+		if (count == 0)
 		{
 			//no employees to write
 			return STATUS_SUCCESS;
@@ -157,11 +226,14 @@ int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employee
 		return STATUS_ERROR;
 	}
 
-	if (write(fd, employees, sizeof(struct employee_t) * headerIn->count) <
-			(ssize_t)sizeof(struct employee_t) * headerIn->count)
+	for (int i = 0; i < count; i++)
 	{
-		perror("write employees");
-		return STATUS_ERROR;
+		employees[i].hours = htonl(employees[i].hours);
+		if (write(fd, &employees[i], sizeof(struct employee_t)) < sizeof(struct employee_t))
+		{
+			perror("write employees");
+			return STATUS_ERROR;
+		}
 	}
 
 	return STATUS_SUCCESS;
