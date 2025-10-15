@@ -105,6 +105,7 @@ int main(int ac, char** av)
 	if (addstring == NULL && list == false)
 	{
 		//guess we can exit early
+		free(headerPtr);
 		return 0;
 	}
 
@@ -118,8 +119,15 @@ int main(int ac, char** av)
 	{
 		headerPtr->count++;
 		employeesPtr = realloc(employeesPtr, sizeof(struct employee_t) * headerPtr->count);
+		if (employeesPtr == NULL)
+		{
+			free(headerPtr);
+			return -1;
+		}
 		if (add_employee(headerPtr, employeesPtr, addstring) == STATUS_ERROR)
 		{
+			free(headerPtr);
+			free(employeesPtr);
 			return -1;
 		}
 		printf("Added employee %s, new count %u\n",
@@ -129,8 +137,11 @@ int main(int ac, char** av)
 
 	if (output_file(dbfd, headerPtr, employeesPtr))
 	{
+		free(headerPtr);
+		free(employeesPtr);
 		return -1;
 	}
-
+	free(headerPtr);
+	free(employeesPtr);
 	return 0;
 }
