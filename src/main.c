@@ -84,6 +84,7 @@ int main(int ac, char** av)
 	dbfd = open(filepath, O_RDWR);
 	if (dbfd == -1)
 	{
+		perror("open db");
 		return -1;
 	}
 
@@ -121,6 +122,7 @@ int main(int ac, char** av)
 		employeesPtr = realloc(employeesPtr, sizeof(struct employee_t) * headerPtr->count);
 		if (employeesPtr == NULL)
 		{
+			perror("realloc");
 			free(headerPtr);
 			return -1;
 		}

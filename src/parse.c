@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <ctype.h>
 
 #include "parse.h"
 #include "common.h"
@@ -181,8 +182,13 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 			return STATUS_ERROR;
 		}
 	}
-	
 	memcpy(addr, start, seek < ADDRESS_LEN - 1 ? seek : ADDRESS_LEN - 1);
+
+	if (!isdigit(start[seek + 1]))
+	{
+			printf("Bad add string\n");
+			return STATUS_ERROR;
+	}
 
 	//what about if addStr is not null terminated
 	const int maxDigits = 20; //should be enough for any unsigned int on any system
