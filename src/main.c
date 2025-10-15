@@ -23,6 +23,7 @@ int main(int ac, char** av)
 	char *filepath = NULL;
 	char *addstring = NULL;
 	bool newfile = false;
+	bool list = false;
 	int dbfd = -1;
 	int c = 0;
 
@@ -101,6 +102,12 @@ int main(int ac, char** av)
 		return -1;
 	}
 
+	if (addstring == NULL && list == false)
+	{
+		//guess we can exit early
+		return 0;
+	}
+
 	struct employee_t* employeesPtr = NULL;
 	if (headerPtr->count > 0 && read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR)
 	{
@@ -115,6 +122,9 @@ int main(int ac, char** av)
 		{
 			return -1;
 		}
+		printf("Added employee %s, new count %u\n",
+				employeesPtr[headerPtr->count - 1].name,
+				headerPtr->count);
 	}
 
 	if (output_file(dbfd, headerPtr, employeesPtr))

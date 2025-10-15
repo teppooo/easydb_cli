@@ -135,6 +135,8 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 
 int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, char* addStr)
 {
+	//strtok would be about 1000x simpler but that's no fun
+	//we got plenty of memory allocated in structs, should be fine
 	if (addStr == NULL || addStr[0] == '\0')
 	{
 		printf("Bad add string\n");
@@ -190,7 +192,13 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 		return STATUS_ERROR;
 	}	
 	memcpy(addr, start, seek < ADDRESS_LEN - 1 ? seek : ADDRESS_LEN - 1);
-	*hours = (unsigned int)strtol(&(start[seek + 1]), NULL, 10);
+
+	//what about if addStr is not null terminated
+	const int maxDigits = 20; //should be enough for any unsigned int on any system
+	char hourBuf[maxDigits];
+	bzero(hourBuf, maxDigits);
+	strncpy((char *)hourBuf, &(start[seek + 1]), maxDigits - 1); //always leave a null byte
+	*hours = (unsigned int)strtol(hourBuf, NULL, 10);
 
 	return STATUS_SUCCESS;
 }
