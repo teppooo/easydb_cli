@@ -11,11 +11,20 @@
 #include "parse.h"
 #include "common.h"
 
+void xfree(void *ptr)
+{
+	if (ptr != NULL)
+	{
+		free(ptr);
+	}
+}
+
 void print_usage(char **av)
 {
 	printf("Usage: %s -n -f <database file>\n", av[0]);
-	printf("\t -n - create new database file\n");
-	printf("\t -f - (required) path to database file\n");
+	printf("\t -n -- create new database file\n");
+	printf("\t -f -- (required) path to database file\n");
+	printf("\t -a -- add employee via CSV list of (name,address,hours)\n");
 }
 
 int main(int ac, char** av)
@@ -113,23 +122,17 @@ int main(int ac, char** av)
 	struct employee_t* employeesPtr = NULL;
 	if (headerPtr->count > 0 && read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR)
 	{
+		xfree(headerPtr);
+		xfree(employeesPtr);
 		return -1;
 	}
 
 	if (addstring != NULL)
 	{
-		headerPtr->count++;
-		employeesPtr = realloc(employeesPtr, sizeof(struct employee_t) * headerPtr->count);
-		if (employeesPtr == NULL)
+		if (add_employee(headerPtr, &employeesPtr, addstring) == STATUS_ERROR)
 		{
-			perror("realloc");
-			free(headerPtr);
-			return -1;
-		}
-		if (add_employee(headerPtr, employeesPtr, addstring) == STATUS_ERROR)
-		{
-			free(headerPtr);
-			free(employeesPtr);
+			xfree(headerPtr);
+			xfree(employeesPtr);
 			return -1;
 		}
 		printf("Added employee %s, new count %u\n",
@@ -139,11 +142,11 @@ int main(int ac, char** av)
 
 	if (output_file(dbfd, headerPtr, employeesPtr))
 	{
-		free(headerPtr);
-		free(employeesPtr);
+		xfree(headerPtr);
+		xfree(employeesPtr);
 		return -1;
 	}
-	free(headerPtr);
-	free(employeesPtr);
+	xfree(headerPtr);
+	xfree(employeesPtr);
 	return 0;
 }
