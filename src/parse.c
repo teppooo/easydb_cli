@@ -147,8 +147,6 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 		return STATUS_ERROR;
 	}
 
-	char *cur = addStr;
-	char *start = addStr;
 	char *name = (char*) &(employeesIn[headerIn->count - 1].name);
 	char *addr = (char*) &(employeesIn[headerIn->count - 1].address);
 	unsigned int *hours = &(employeesIn[headerIn->count - 1].hours);
@@ -156,33 +154,43 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 	bzero(name, NAME_LEN);
 	bzero(name, ADDRESS_LEN);
 
-	while (*cur != ',' && *cur != '\0')
+	ptrdiff_t seek = 0;
+	char *start = addStr;
+
+	while (start[seek] != ',' && start[seek] != '\0')
 	{
-		cur++;
+		seek++;
+		if (seek == NAME_LEN)
+		{
+			printf("Bad add string\n");
+			return STATUS_ERROR;
+		}
 	}
-	if (*cur == '\0')
+	if (start[seek] == '\0')
 	{
 		printf("Bad add string\n");
 		return STATUS_ERROR;
 	}
-	ptrdiff_t len = cur - start;
-	memcpy(name, start, len < NAME_LEN - 1 ? len : NAME_LEN - 1);
-	cur++;
-	start = cur;
+	memcpy(name, start, seek < NAME_LEN - 1 ? seek : NAME_LEN - 1);
+	start = &(start[seek + 1]);
+	seek = 0;
 
-	while (*cur != ',' && *cur != '\0')
+	while (start[seek] != ',' && start[seek] != '\0')
 	{
-		cur++;
+		seek++;
+		if (seek == ADDRESS_LEN)
+		{
+			printf("Bad add string\n");
+			return STATUS_ERROR;
+		}
 	}
-	if (*cur == '\0')
+	if (start[seek] == '\0')
 	{
 		printf("Bad add string\n");
 		return STATUS_ERROR;
 	}	
-	len = cur - start;
-	memcpy(addr, start, len < ADDRESS_LEN - 1 ? len : ADDRESS_LEN - 1);
-	cur++;
-	*hours = (unsigned int)strtol(cur, NULL, 10);
+	memcpy(addr, start, seek < ADDRESS_LEN - 1 ? seek : ADDRESS_LEN - 1);
+	*hours = (unsigned int)strtol(&(start[seek + 1]), NULL, 10);
 
 	return STATUS_SUCCESS;
 }

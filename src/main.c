@@ -111,10 +111,13 @@ int main(int ac, char** av)
 	{
 		headerPtr->count++;
 		employeesPtr = realloc(employeesPtr, sizeof(struct employee_t) * headerPtr->count);
-		add_employee(headerPtr, employeesPtr, addstring);
+		if (add_employee(headerPtr, employeesPtr, addstring) == STATUS_ERROR)
+		{
+			return -1;
+		}
 	}
 
-	if (output_file(dbfd, headerPtr, employeesPtr)) //no employees to output yet
+	if (output_file(dbfd, headerPtr, employeesPtr))
 	{
 		return -1;
 	}
