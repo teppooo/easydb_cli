@@ -134,7 +134,7 @@ int read_employees(int fd, struct dbheader_t *headerIn, struct employee_t **empl
 	return STATUS_SUCCESS;
 }
 
-int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, char* addStr)
+int fun_add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, char* addStr)
 {
 	//strtok would be about 1000x simpler but that's no fun
 	//we got plenty of memory allocated in structs, should be fine
@@ -196,6 +196,33 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t *employeesIn, ch
 	bzero(hourBuf, maxDigits);
 	strncpy((char *)hourBuf, &(start[seek + 1]), maxDigits - 1); //always leave a null byte
 	*hours = (unsigned int)strtol(hourBuf, NULL, 10);
+
+	return STATUS_SUCCESS;
+}
+
+//BORING strtok version, I guess tests expect that some memory is 
+//allocated during the add or smth
+int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring)
+{
+	if (dbhdr == NULL || employees == NULL || addstring == NULL)
+	{
+		printf("Error adding employee\n");
+		return STATUS_ERROR;
+	}
+
+	char *name = strtok(addstring, ",");
+	char *addr = strtok(NULL, ",");
+	char *hours = strtok(NULL, ",");
+
+	if (name == NULL || addr == NULL || hours == NULL)
+	{
+		printf("Bad add string\n");
+		return STATUS_ERROR;
+	}
+
+	strncpy(employees[dbhdr->count-1].name, name, sizeof(employees[dbhdr->count-1].name));
+	strncpy(employees[dbhdr->count-1].address, addr, sizeof(employees[dbhdr->count-1].address));
+	employees[dbhdr->count-1].hours = atoi(hours);
 
 	return STATUS_SUCCESS;
 }
