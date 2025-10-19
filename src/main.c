@@ -22,9 +22,11 @@ void xfree(void *ptr)
 void print_usage(char **av)
 {
 	printf("Usage: %s -n -f <database file>\n", av[0]);
-	printf("\t -n -- create new database file\n");
+	printf("\t -h -- show these instructions\n");
 	printf("\t -f -- (required) path to database file\n");
+	printf("\t -n -- create new database file\n");
 	printf("\t -a -- add employee via CSV list of (name,address,hours)\n");
+	printf("\t -l -- list all the employees in database\n");
 }
 
 int main(int ac, char** av)
@@ -36,9 +38,13 @@ int main(int ac, char** av)
 	int dbfd = -1;
 	int c = 0;
 
-	while ((c = getopt(ac, av, "nf:a:")) != -1)
+	while ((c = getopt(ac, av, "hnlf:a:")) != -1)
 	{
 		switch (c) {
+			case 'h':
+				print_usage(av);
+				return 0;
+				break;
 			case 'n':
 				newfile = true;
 				break;
@@ -48,8 +54,12 @@ int main(int ac, char** av)
 			case 'a':
 				addstring = optarg;
 				break;
+			case 'l':
+				list = true;
+				break;
 			case '?':
-				printf("Unknown option -%c\n", c);
+				print_usage(av);
+				return -1;
 				break;
 			default:
 				return -1;
@@ -120,6 +130,11 @@ int main(int ac, char** av)
 		printf("Added employee %s, new count %u\n",
 				employeesPtr[headerPtr->count - 1].name,
 				headerPtr->count);
+	}
+
+	if (list)
+	{
+		list_employees(headerPtr, employeesPtr);
 	}
 
 	if (output_file(dbfd, headerPtr, employeesPtr))

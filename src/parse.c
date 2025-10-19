@@ -211,6 +211,24 @@ int add_employee(struct dbheader_t *headerIn, struct employee_t **employeesOut, 
 	return STATUS_SUCCESS;
 }
 
+int list_employees(struct dbheader_t *headerIn, struct employee_t *employeesIn)
+{
+	if (headerIn == NULL || employeesIn == NULL)
+	{
+		printf("Error listing employees\n");
+		return STATUS_ERROR;
+	}
+
+	for (int i = 0; i < headerIn->count; i++)
+	{
+		printf("Employee %d\n", i);
+		printf("\tName: %s\n", employeesIn[i].name);
+		printf("\tAddress: %s\n", employeesIn[i].address);
+		printf("\tHours: %d\n", employeesIn[i].hours);
+	}
+	return STATUS_SUCCESS;
+}
+
 int output_file(int fd, struct dbheader_t *headerIn, struct employee_t *employees)
 {
 	if (fd < 0 || headerIn == NULL)
