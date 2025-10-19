@@ -1,149 +1,128 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <getopt.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "common.h"
 #include "file.h"
 #include "parse.h"
-#include "common.h"
 
-void xfree(void *ptr)
-{
-	if (ptr != NULL)
-	{
-		free(ptr);
-	}
+void xfree(void *ptr) {
+  if (ptr != NULL) {
+    free(ptr);
+  }
 }
 
-void print_usage(char **av)
-{
-	printf("Usage: %s -n -f <database file>\n", av[0]);
-	printf("\t -h -- show these instructions\n");
-	printf("\t -f -- (required) path to database file\n");
-	printf("\t -n -- create new database file\n");
-	printf("\t -a -- add employee via CSV list of (name,address,hours)\n");
-	printf("\t -l -- list all the employees in database\n");
+void print_usage(char **av) {
+  printf("Usage: %s -n -f <database file>\n", av[0]);
+  printf("\t -h -- show these instructions\n");
+  printf("\t -f -- (required) path to database file\n");
+  printf("\t -n -- create new database file\n");
+  printf("\t -a -- add employee via CSV list of (name,address,hours)\n");
+  printf("\t -l -- list all the employees in database\n");
 }
 
-int main(int ac, char** av)
-{
-	char *filepath = NULL;
-	char *addstring = NULL;
-	bool newfile = false;
-	bool list = false;
-	int dbfd = -1;
-	int c = 0;
+int main(int ac, char **av) {
+  char *filepath = NULL;
+  char *addstring = NULL;
+  bool newfile = false;
+  bool list = false;
+  int dbfd = -1;
+  int c = 0;
 
-	while ((c = getopt(ac, av, "hnlf:a:")) != -1)
-	{
-		switch (c) {
-			case 'h':
-				print_usage(av);
-				return 0;
-				break;
-			case 'n':
-				newfile = true;
-				break;
-			case 'f':
-				filepath = optarg;
-				break;
-			case 'a':
-				addstring = optarg;
-				break;
-			case 'l':
-				list = true;
-				break;
-			case '?':
-				print_usage(av);
-				return -1;
-				break;
-			default:
-				return -1;
-		}
-	}
-	
-	if (filepath == NULL)
-	{
-		printf("Filepath is required argument\n");
-		print_usage(av);
-		return -1;
-	}
+  while ((c = getopt(ac, av, "hnlf:a:")) != -1) {
+    switch (c) {
+    case 'h':
+      print_usage(av);
+      return 0;
+      break;
+    case 'n':
+      newfile = true;
+      break;
+    case 'f':
+      filepath = optarg;
+      break;
+    case 'a':
+      addstring = optarg;
+      break;
+    case 'l':
+      list = true;
+      break;
+    case '?':
+      print_usage(av);
+      return -1;
+      break;
+    default:
+      return -1;
+    }
+  }
 
-	printf("Newfile: %s\n", newfile ? "true" : "false");
-	printf("Filepath: %s\n", filepath);
+  if (filepath == NULL) {
+    printf("Filepath is required argument\n");
+    print_usage(av);
+    return -1;
+  }
 
-	struct dbheader_t* headerPtr = NULL;
-	if (newfile)
-	{
-		dbfd = create_db_file(filepath);
-		if (dbfd == -1)
-		{
-			return -1;
-		}
-		if (create_db_header(&headerPtr) == STATUS_ERROR)
-		{
-			return -1;
-		}
-		printf("Database created.\n");
-	}
-	else
-	{
-		dbfd = open(filepath, O_RDWR);
-		if (dbfd == -1)
-		{
-			perror("open db");
-			return -1;
-		}
-		if (validate_db_header(dbfd, &headerPtr) == STATUS_ERROR)
-		{
-			return -1;
-		}
-	}
+  printf("Newfile: %s\n", newfile ? "true" : "false");
+  printf("Filepath: %s\n", filepath);
 
-	printf("main: magic:%u version:%u count:%u filesize:%u\n",
-		headerPtr->magic,
-		headerPtr->version,
-		headerPtr->count,
-		headerPtr->filesize);
-	printf("good job so far :)\n");
+  struct dbheader_t *headerPtr = NULL;
+  if (newfile) {
+    dbfd = create_db_file(filepath);
+    if (dbfd == -1) {
+      return -1;
+    }
+    if (create_db_header(&headerPtr) == STATUS_ERROR) {
+      return -1;
+    }
+    printf("Database created.\n");
+  } else {
+    dbfd = open(filepath, O_RDWR);
+    if (dbfd == -1) {
+      perror("open db");
+      return -1;
+    }
+    if (validate_db_header(dbfd, &headerPtr) == STATUS_ERROR) {
+      return -1;
+    }
+  }
 
-	struct employee_t* employeesPtr = NULL;
-	if (headerPtr->count > 0 && read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR)
-	{
-		xfree(headerPtr);
-		xfree(employeesPtr);
-		return -1;
-	}
+  printf("main: magic:%u version:%u count:%u filesize:%u\n", headerPtr->magic,
+         headerPtr->version, headerPtr->count, headerPtr->filesize);
+  printf("good job so far :)\n");
 
-	if (addstring != NULL)
-	{
-		if (add_employee(headerPtr, &employeesPtr, addstring) == STATUS_ERROR)
-		{
-			xfree(headerPtr);
-			xfree(employeesPtr);
-			return -1;
-		}
-		printf("Added employee %s, new count %u\n",
-				employeesPtr[headerPtr->count - 1].name,
-				headerPtr->count);
-	}
+  struct employee_t *employeesPtr = NULL;
+  if (headerPtr->count > 0 &&
+      read_employees(dbfd, headerPtr, &employeesPtr) == STATUS_ERROR) {
+    xfree(headerPtr);
+    xfree(employeesPtr);
+    return -1;
+  }
 
-	if (list)
-	{
-		list_employees(headerPtr, employeesPtr);
-	}
+  if (addstring != NULL) {
+    if (add_employee(headerPtr, &employeesPtr, addstring) == STATUS_ERROR) {
+      xfree(headerPtr);
+      xfree(employeesPtr);
+      return -1;
+    }
+    printf("Added employee %s, new count %u\n",
+           employeesPtr[headerPtr->count - 1].name, headerPtr->count);
+  }
 
-	if (output_file(dbfd, headerPtr, employeesPtr))
-	{
-		xfree(headerPtr);
-		xfree(employeesPtr);
-		return -1;
-	}
-	xfree(headerPtr);
-	xfree(employeesPtr);
-	return 0;
+  if (list) {
+    list_employees(headerPtr, employeesPtr);
+  }
+
+  if (output_file(dbfd, headerPtr, employeesPtr)) {
+    xfree(headerPtr);
+    xfree(employeesPtr);
+    return -1;
+  }
+  xfree(headerPtr);
+  xfree(employeesPtr);
+  return 0;
 }
